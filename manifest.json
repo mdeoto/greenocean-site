@@ -1,60 +1,29 @@
 {
-  "site": {
-    "title": "GreenOcean",
-    "subtitle": "Mapas & Índices"
-  },
-  "latest_cycle": "20250925_12Z",
+  "base_url": "assets",
+  "latest_cycle": "20250925_00Z",
   "available_cycles": [
-    "20250925_12Z",
-    "20250925_06Z",
-    "20250925_00Z",
-    "20250924_18Z"
+    "20250925_00Z"
   ],
-  "regions": [
-    {
-      "id": "golfo_san_matias",
-      "name": "Golfo San Matías"
-    }
-  ],
-  "variables": [
-    {
-      "key": "swh_dir",
-      "name": "Altura de ola (SWH) + dirección"
-    }
-  ],
-  "times_hours": [
-    0,
-    3,
-    6,
-    9,
-    12,
-    15,
-    18,
-    21,
-    24,
-    27,
-    30,
-    33,
-    36,
-    39,
-    42,
-    45,
-    48,
-    54,
-    60,
-    66,
-    72,
-    78,
-    84,
-    90,
-    96,
-    102,
-    108,
-    114,
-    120
-  ],
-  "tabs": [
-    "Mapas",
-    "Índices"
-  ]
+  "regions": {
+    "plataforma": "Plataforma",
+    "rio_de_la_plata": "R\u00edo de la Plata"
+  },
+  "variables": {
+    "storm_surge": "Storm surge",
+    "wave_height_dir": "Altura de ola (SWH) + direcci\u00f3n",
+    "wave_period_dir": "Per\u00edodo de ola + direcci\u00f3n"
+  },
+  "availability": {
+    "storm_surge": [
+      "plataforma",
+      "rio_de_la_plata"
+    ],
+    "wave_height_dir": [
+      "plataforma"
+    ],
+    "wave_period_dir": [
+      "plataforma"
+    ]
+  },
+  "times_hours": []
 }

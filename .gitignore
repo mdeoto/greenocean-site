@@ -1,2 +1,12 @@
+# OS / editor
 .DS_Store
-node_modules/
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# build / cache (por si en el futuro sumamos tooling)
+dist/
+cache/
+*.log
