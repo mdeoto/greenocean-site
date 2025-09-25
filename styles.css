@@ -1,0 +1,54 @@
+:root{--bg:#F5EEE6;--fg:#1F2937;--mut:#E7D8C9;--card:#FFF7F1;--chip:#EADBC8;--accent:#4F46E5;--line:#E5D3C6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,Segoe UI,Roboto,Ubuntu,Arial}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);background:#FFFDFC}
+.brand h1{margin:0;font-size:18px}
+.sub{font-size:12px;color:#6B7280}
+.tabs .tab-btn{margin-left:8px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--mut);color:var(--fg);cursor:pointer}
+.tab-btn.active{background:var(--accent);border-color:#4338CA;color:#fff}
+main{height:calc(100vh - 58px);display:flex;flex-direction:column}
+.tab{display:none;flex:1}
+.tab.active{display:block}
+.row{display:flex;gap:10px;padding:10px}
+.banner{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;align-items:center;gap:12px}
+.banner-title{font-size:12px;color:#6B7280}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips.vertical{flex-direction:column}
+.chip{background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:6px 9px;font-size:12px;cursor:pointer}
+.chip.active{background:var(--accent);border-color:#4338CA;color:#fff}
+.grid{flex:1;display:flex;gap:10px;padding:10px}
+.left{width:270px;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
+.card-title{font-size:13px;color:#6B7280;margin-bottom:8px}
+.figure{flex:1;display:flex;align-items:center;justify-content:center}
+.figure img{max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.15)}
+.time-panel{display:flex;align-items:center;gap:10px}
+#time-slider{width:380px}
+footer{border-top:1px solid var(--line);padding:6px 10px;color:#6B7280;font-size:12px;background:#FFFDFC}
+.flex1{flex:1}
+.p{padding:16px}
+
+
+/* Simple styling for cycle dropdown */
+#cycleSelect{padding:8px 10px;border-radius:10px;border:1px solid #d8d0c2;background:#fff;color:#2c2a26}
+
+
+/* dropdown styles */
+.dropdown{ position:relative; display:inline-block; }
+.dropdown-btn{
+  display:flex; align-items:center; gap:.5rem;
+  padding:.6rem .9rem; border:1px solid #decfbf; border-radius:12px;
+  background:#fff; color:#2c2a26; cursor:pointer;
+}
+.dropdown-btn .arrow{ opacity:.7; }
+.dropdown-menu{
+  position:absolute; top:110%; left:0; right:auto; z-index:50;
+  display:none; background:#fff; border:1px solid #decfbf; border-radius:12px;
+  min-width:220px; box-shadow:0 10px 24px rgba(0,0,0,.1); padding:.25rem; margin-top:.25rem;
+  max-height:240px; overflow:auto;
+}
+.dropdown-item{ padding:.5rem .75rem; border-radius:10px; cursor:pointer; white-space:nowrap; }
+.dropdown-item:hover{ background:#f7efe5; }
+
+/* footer spacing so it never overlaps the figure */
+footer{ position:static; padding:10px 16px; margin-top:10px; }
+#status{ color:#6f675c; font-size:.9rem; }
