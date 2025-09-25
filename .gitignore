@@ -10,3 +10,6 @@ Thumbs.db
 dist/
 cache/
 *.log
+
+# staging temporal del publish
+/tools/stage_ftp/
