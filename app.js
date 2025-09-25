@@ -1,183 +1,171 @@
-let manifest = null;
-const $ = (s)=>document.querySelector(s);
-const $$ = (s)=>document.querySelectorAll(s);
-
-async function loadManifest(){
-  try{
-    const resp = await fetch('manifest.json');
-    if (!resp.ok) throw new Error('fetch failed');
-    return await resp.json();
-  }catch(e){
-    const el = document.getElementById('inline-manifest');
-    return JSON.parse(el.textContent);
-  }
+// ===== Manifest loader (usa manifest.json del repo) =====
+async function loadManifest() {
+  const res = await fetch('manifest.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error('No pude leer manifest.json');
+  const m = await res.json();
+  return m;
 }
 
-function fmtCycleStr(cyc){
-  const y = cyc.slice(0,4), m = cyc.slice(4,6), d = cyc.slice(6,8), H = cyc.slice(9,11);
-  const dt = new Date(`${y}-${m}-${d}T${H}:00:00Z`);
-  const months = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-  return `${String(d).padStart(2,"0")}-${months[dt.getUTCMonth()]}-${y} ${H}Z`;
-}
-
-async function init(){
-  manifest = await loadManifest();
-  setupTabs();
-  setupCycleBanner();
-  setupRegionBanner();
-  setupVariableBanner();
-  setupTimePanel();
-  setStatus();
-  updateFigure(true);
-}
-
-function setupTabs(){
-  $$('.tab-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      $$('.tab-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      $$('.tab').forEach(t=>t.classList.remove('active'));
-      $('#'+btn.dataset.tab).classList.add('active');
-    });
-  });
-}
-
-let state = {
+const state = {
+  manifest: null,
   cycle: null,
-  region: "golfo_san_matias",
-  variable: "swh_dir",
-  tIndex: 0,
-  playing: false,
-  timer: null,
+  variable: null,
+  region: null,
+  hourIndex: 0,         // índice dentro de times_hours
 };
 
-function setupCycleBanner(){
-  const cont = document.getElementById("cycles");
-  const btn = document.getElementById("cycleBtn");
-  const label = document.getElementById("cycleLabel");
-  const menu = document.getElementById("cycleMenu");
-  menu.innerHTML = "";
-  state.cycle = manifest.latest_cycle;
-  label.textContent = fmtCycleStr(state.cycle);
-  manifest.available_cycles.forEach(cyc=>{
-    const li = document.createElement("li");
-    li.className = "dropdown-item";
-    li.setAttribute("role","option");
-    li.dataset.cycle = cyc;
-    li.textContent = fmtCycleStr(cyc);
-    li.title = cyc;
-    li.addEventListener("click",()=>{
-      state.cycle = cyc; state.tIndex = 0; label.textContent = fmtCycleStr(cyc);
-      menu.style.display = "none"; btn.setAttribute("aria-expanded","false");
-      updateFigure(true); setStatus();
-    });
-    menu.appendChild(li);
-  });
-  btn.addEventListener("click",()=>{
-    const open = menu.style.display === "block";
-    menu.style.display = open ? "none" : "block";
-    btn.setAttribute("aria-expanded", open ? "false" : "true");
-  });
-  document.addEventListener("click",(e)=>{
-    if(!cont.contains(e.target)){ menu.style.display = "none"; btn.setAttribute("aria-expanded","false"); }
-  });
+// Helpers
+const $ = (q) => document.querySelector(q);
+const $$ = (q) => Array.from(document.querySelectorAll(q));
+
+function buildImageUrl() {
+  const { manifest, cycle, variable, region } = state;
+  const t = manifest.times_hours[state.hourIndex] ?? 0;
+  const h3 = String(t).padStart(3, '0') + 'h.png';
+  const base = manifest.base_url.replace(/\/+$/,'');
+  return `${base}/${cycle}/${region}/${variable}/${h3}`;
 }
 
-function setupRegionBanner(){
-  const cont = $('#regions'); cont.innerHTML='';
-  manifest.regions.forEach(r=>{
-    const b = document.createElement('div');
-    b.className = 'chip'+(r.id===state.region?' active':'');
-    b.textContent = r.name;
-    b.dataset.region = r.id;
-    b.addEventListener('click',()=>{
-      state.region = r.id;
-      state.tIndex = 0;
-      $$('#regions .chip').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      updateFigure(true);
-    });
-    cont.appendChild(b);
-  });
+function allowedRegionsFor(variableKey) {
+  const avail = state.manifest.availability || {};
+  return new Set(avail[variableKey] || []);
 }
 
-function setupVariableBanner(){
-  const cont = $('#variables'); cont.innerHTML='';
-  manifest.variables.forEach(v=>{
-    const b = document.createElement('div');
-    b.className = 'chip'+(v.key===state.variable?' active':'');
-    b.textContent = v.name;
-    b.dataset.var = v.key;
-    b.addEventListener('click',()=>{
-      state.variable = v.key;
-      state.tIndex = 0;
-      $$('#variables .chip').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      updateFigure(true);
-    });
-    cont.appendChild(b);
-  });
-}
+// ===== Render de ciclos (dropdown) =====
+function renderCycles() {
+  const sel = $('#initSelect');          // <select id="initSelect"> en tu HTML
+  const box = $('#initBox');             // contenedor para ocultar si hay 1 ciclo
+  sel.innerHTML = '';
 
-function setupTimePanel(){
-  const maxIdx = manifest.times_hours.length - 1;
-  const slider = $('#time-slider');
-  slider.min = 0; slider.max = maxIdx; slider.value = 0;
-  $('#time-label').textContent = `${manifest.times_hours[0]} h`;
-  slider.addEventListener('input', e=>{
-    state.tIndex = parseInt(e.target.value,10);
-    $('#time-label').textContent = `${manifest.times_hours[state.tIndex]} h`;
-    updateFigure();
-  });
-  $('#loop-btn').addEventListener('click',()=>{
-    state.playing = !state.playing;
-    $('#loop-btn').textContent = state.playing ? 'Stop' : 'Loop';
-    if (state.playing){
-      state.timer = setInterval(()=>{
-        state.tIndex = (state.tIndex + 1) % (maxIdx+1);
-        slider.value = state.tIndex;
-        $('#time-label').textContent = `${manifest.times_hours[state.tIndex]} h`;
-        updateFigure();
-      }, 350);
-    } else {
-      clearInterval(state.timer);
-    }
-  });
-}
-
-function pathForFrame(){
-  const cyc = state.cycle;
-  const reg = state.region;
-  const v   = state.variable;
-  const tIdx = state.tIndex;
-  const y = cyc.slice(0,4), m = cyc.slice(4,6), d = cyc.slice(6,8), H = cyc.slice(9,11);
-  const dt0 = new Date(`${y}-${m}-${d}T${H}:00:00Z`);
-  const hrs = manifest.times_hours[tIdx];
-  const dt = new Date(dt0.getTime() + hrs*3600*1000);
-  const ts = dt.toISOString().replace(/[:-]|\.\d{3}/g,''); // YYYYMMDDTHHMMSSZ
-  return `assets/${cyc}/${reg}/${v}/${ts}.png`;
-}
-
-function updateFigure(force=false){
-  const img = $('#fig');
-  const src = pathForFrame();
-  if (force || img.getAttribute('src') !== src){
-    img.setAttribute('src', src);
+  const cycles = state.manifest.available_cycles || [];
+  for (const cyc of cycles) {
+    const opt = document.createElement('option');
+    opt.value = cyc;
+    opt.textContent = cyc.replace('_00Z',' 00Z')
+                         .replace(/(\d{4})(\d{2})(\d{2})/,'$3-$2-$1');
+    sel.appendChild(opt);
   }
+
+  state.cycle = state.manifest.latest_cycle || cycles[cycles.length-1] || null;
+  sel.value = state.cycle || '';
+
+  // esconder si hay 1 solo ciclo
+  if (box && cycles.length <= 1) box.style.display = 'none';
+
+  sel.onchange = () => {
+    state.cycle = sel.value;
+    updateFigure();
+  };
 }
 
-function setStatus(){
-  // Footer text simplified (no cycle) and subline shows today\'s date.
-  const months = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-  const now = new Date();
-  const dd = String(now.getDate()).padStart(2,"0");
-  const mm = months[now.getMonth()];
-  const yyyy = now.getFullYear();
-  const todayStr = `${dd}-${mm}-${yyyy}`;
-  const sub = document.getElementById("subline");
-  sub.textContent = `Mapas & Índices — ${todayStr}`;
-  const st = document.getElementById("status");
-  st.textContent = "GreenOcean — demo";
+// ===== Render de variables =====
+function renderVariables() {
+  const wrap = $('#varButtons');         // contenedor de pills
+  wrap.innerHTML = '';
+  const entries = Object.entries(state.manifest.variables); // [key, label]
+
+  for (const [key, label] of entries) {
+    const b = document.createElement('button');
+    b.className = 'pill';
+    b.dataset.variable = key;
+    b.textContent = label;
+    b.onclick = () => {
+      $$('#varButtons .pill.selected').forEach(x=>x.classList.remove('selected'));
+      b.classList.add('selected');
+      state.variable = key;
+      renderRegions();     // filtra según availability
+      updateFigure();
+    };
+    wrap.appendChild(b);
+  }
+
+  // default: primera variable
+  const first = wrap.querySelector('.pill');
+  if (first) { first.click(); }
 }
 
-init();
+// ===== Render de regiones (filtra por availability) =====
+function renderRegions() {
+  const wrap = $('#regionButtons');
+  wrap.innerHTML = '';
+
+  const allowed = allowedRegionsFor(state.variable);
+  const entries = Object.entries(state.manifest.regions);   // [key, label]
+
+  for (const [key, label] of entries) {
+    const b = document.createElement('button');
+    b.className = 'pill';
+    b.dataset.region = key;
+    b.textContent = label;
+
+    const ok = allowed.has(key);
+    b.disabled = !ok;
+    b.style.opacity = ok ? '1' : '.4';
+    b.style.pointerEvents = ok ? 'auto' : 'none';
+
+    b.onclick = () => {
+      if (b.disabled) return;
+      $$('#regionButtons .pill.selected').forEach(x=>x.classList.remove('selected'));
+      b.classList.add('selected');
+      state.region = key;
+      updateFigure();
+    };
+
+    wrap.appendChild(b);
+  }
+
+  // default: primera permitida
+  const firstOk = wrap.querySelector('.pill:not([disabled])');
+  if (firstOk) { firstOk.click(); }
+}
+
+// ===== Slider de horas =====
+function setupHourSlider() {
+  const slider = $('#hourSlider');   // <input type="range" id="hourSlider">
+  const label  = $('#hourLabel');    // span que muestra "84 h"
+
+  const n = state.manifest.times_hours.length;
+  slider.min = 0;
+  slider.max = Math.max(0, n - 1);
+  slider.step = 1;
+  slider.value = 0;
+
+  const updateLabel = () => {
+    const idx = parseInt(slider.value, 10);
+    const h = state.manifest.times_hours[idx] ?? 0;
+    state.hourIndex = idx;
+    label.textContent = `${h} h`;
+  };
+
+  slider.oninput = () => { updateLabel(); updateFigure(); };
+  updateLabel();
+}
+
+// ===== Actualizar figura =====
+function updateFigure() {
+  const img = $('#mainFigure'); // <img id="mainFigure">
+  if (!state.variable || !state.region || !state.cycle) return;
+  const url = buildImageUrl();
+  img.src = url;
+
+  // Título
+  const title = $('#figureTitle');
+  const regLabel = state.manifest.regions[state.region];
+  const varLabel = state.manifest.variables[state.variable];
+  const h = state.manifest.times_hours[state.hourIndex] ?? 0;
+  title.textContent = `${regLabel} · ${varLabel} · ${String(h).padStart(3,'0')} h`;
+}
+
+// ===== Init =====
+(async function init() {
+  try {
+    state.manifest = await loadManifest();
+    renderCycles();
+    renderVariables();
+    setupHourSlider();
+    updateFigure();
+  } catch (e) {
+    console.error(e);
+  }
+})();
+
