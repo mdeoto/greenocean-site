@@ -36,7 +36,10 @@
         <div class="time-panel">
           <span id="time-label">0 h</span>
           <input type="range" id="time-slider" min="0" max="0" value="0">
+          <button id="rewind-btn">⏮<</button>
+          <button id="play-btn">▶</button>
           <button id="loop-btn">Loop</button>
+          <span id="now-playing" class="muted"></span>
         </div>
       </div>
     </div>
@@ -67,7 +70,6 @@
 <footer>
   <div id="status">—</div>
 </footer>
-<script id="inline-manifest" type="application/json">{"site": {"title": "GreenOcean", "subtitle": "Mapas & Índices"}, "latest_cycle": "20250925_12Z", "available_cycles": ["20250925_12Z", "20250925_06Z", "20250925_00Z", "20250924_18Z"], "regions": [{"id": "golfo_san_matias", "name": "Golfo San Matías"}], "variables": [{"key": "swh_dir", "name": "Altura de ola (SWH) + dirección"}], "times_hours": [0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 54, 60, 66, 72, 78, 84, 90, 96, 102, 108, 114, 120], "tabs": ["Mapas", "Índices"]}</script>
-<script src="app.js"></script>
+<script src="app.js?v=1"></script>
 </body>
 </html>
