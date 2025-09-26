@@ -49,32 +49,57 @@ function renderCycles() {
   const menu = $('#cycleMenu');
   const lab  = $('#cycleLabel');
   if (!wrap || !btn || !menu || !lab) return;
+
+  // limpiar menú
   menu.innerHTML = '';
 
-  const cycles = state.manifest.available_cycles || [];
-  const latest = state.manifest.latest_cycle || cycles[cycles.length-1] || null;
+  // tomar del manifest, deduplicar y ordenar (asc: 25, 26)
+  const raw = state.manifest.available_cycles || [];
+  const seen = new Set();
+  const cycles = raw.filter(c => !seen.has(c) && seen.add(c))
+                    .sort((a,b) => a.localeCompare(b));
+
+  // latest = del manifest o el último de la lista
+  const latest = state.manifest.latest_cycle || cycles[cycles.length - 1] || null;
   state.cycle = latest;
 
-  for (const cyc of cycles) {
-    const li = document.createElement('li');
-    li.setAttribute('role', 'option');
-    li.dataset.value = cyc;
-    li.textContent = cyc.replace('_00Z',' 00Z').replace(/(\d{4})(\d{2})(\d{2})/, '$3-$2-$1');
-    li.onclick = () => {
-      state.cycle = cyc;
-      lab.textContent = li.textContent;
-      menu.classList.remove('open');
-      updateFigure();
-    };
-    menu.appendChild(li);
-  }
-  lab.textContent = (latest || '—').replace('_00Z',' 00Z').replace(/(\d{4})(\d{2})(\d{2})/, '$3-$2-$1');
+  // construir opciones
+// construir opciones
+for (const cyc of cycles) {
+  const li = document.createElement('li');
+  li.className = 'dropdown-item'; // <- añade esta línea
+  li.setAttribute('role', 'option');
+  li.dataset.value = cyc;
+  li.textContent = cyc
+    .replace('_00Z', ' 00Z')
+    .replace(/(\d{4})(\d{2})(\d{2})/, '$3-$2-$1');
+  li.onclick = () => {
+    state.cycle = cyc;
+    lab.textContent = li.textContent;
+    menu.classList.remove('open');
+    updateFigure();
+  };
+  menu.appendChild(li);
+}
 
-  // abrir/cerrar
-  btn.onclick = () => menu.classList.toggle('open');
+  // etiqueta del botón con el latest
+  lab.textContent = (latest || '—')
+    .replace('_00Z', ' 00Z')
+    .replace(/(\d{4})(\d{2})(\d{2})/, '$3-$2-$1');
 
-  // si hay un solo ciclo, ocultar el dropdown
-  if (cycles.length <= 1) wrap.style.visibility = 'hidden';
+  // abrir/cerrar menú
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    menu.classList.toggle('open');
+  };
+  // cerrar si se clickea fuera
+  document.addEventListener('click', () => menu.classList.remove('open'));
+
+  // mostrar el dropdown solo si hay 2+ ciclos
+  wrap.style.visibility = cycles.length >= 2 ? 'visible' : 'hidden';
+
+  // debug útil en consola
+  console.log('renderCycles():', { cycles, latest });
 }
 
 // ===== variables =====

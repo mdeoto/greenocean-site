@@ -31,7 +31,7 @@ cleanup() { rm -rf "$STAGE"; }
 trap cleanup EXIT
 
 require_bin() {
-  command -v "$1" >/dev/null 2>&1 || { echo "[ERROR] Falta '$1' (instalá con apt)."; exit 1; }
+  command -v "$1" >/dev/null 2>&1 || { echo "[ERROR] Falta '$1' (instalalo con apt)."; exit 1; }
 }
 
 echo "[INFO] Ciclo actual: $CYCLE"
@@ -137,9 +137,10 @@ mkdir -p "$DEST"
 rsync -av --delete "$NORM/" "$DEST/"
 
 # ======= RETENCIÓN: mantener hoy y 2 días previos (3 ciclos 00Z) =======
-echo "[INFO] Retención de ciclos: manteniendo últimos 3 (hoy y 2 previos)"
+RETENTION_CYCLES=5
+echo "[INFO] Retención de ciclos: manteniendo últimos ${RETENTION_CYCLES}"
 KEEP_DATES=()
-for i in 0 1 2; do
+for i in $(seq 0 $((RETENTION_CYCLES-1))); do
   KEEP_DATES+=( "$(date -u -d "${CYCLE_DATE_UTC} -${i} day" +'%Y%m%d')_00Z" )
 done
 
@@ -168,13 +169,23 @@ if [ "${HCOUNT}" -eq 0 ]; then
   exit 1
 fi
 
+# ======= CACHE-BUSTING (JS/CSS) =======
+# Usamos el ciclo como versión; si querés incluir el hash de commit, descomentá VER_HASH.
+VER="${CYCLE}"
+# VER_HASH="$(git rev-parse --short HEAD 2>/dev/null || date -u +%H%M%S)"
+# VER="${CYCLE}-${VER_HASH}"
+
+# app.js
+sed -i "s#app\.js?v=[^\"']*#app.js?v=${VER}#g" index.html
+# styles.css (opcional: descomentá si tenés ?v en el link)
+# sed -i "s#styles\.css?v=[^\"']*#styles.css?v=${VER}#g" index.html
+
 # ======= GIT PUBLISH (sólo si hay cambios) =======
 if [ -n "$(git status --porcelain)" ]; then
   git add -A
-  git commit -m "publish: ${CYCLE} (00Z) desde FTP + retención 3 ciclos"
+  git commit -m "publish: ${CYCLE} (00Z) desde FTP + retención 3 ciclos + cache-busting ${VER}"
   git push
   echo "[OK] Publicado ${CYCLE}"
 else
   echo "[INFO] No hay cambios para publicar."
 fi
-
