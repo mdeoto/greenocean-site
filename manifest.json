@@ -1,11 +1,12 @@
 {
   "base_url": "assets",
-  "latest_cycle": "20251106_00Z",
+  "latest_cycle": "20251107_00Z",
   "available_cycles": [
     "20251103_00Z",
     "20251104_00Z",
     "20251105_00Z",
-    "20251106_00Z"
+    "20251106_00Z",
+    "20251107_00Z"
   ],
   "regions": {
     "plataforma": "Plataforma",
