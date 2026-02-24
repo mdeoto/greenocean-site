@@ -10,7 +10,7 @@ FTP_SRC_DIR="/data/compartidos_shn/tmp"   # donde tu pipeline deja los PNG
 # Usa ~/.netrc con permisos 600. Si no, añadí -u 'user,pass' a lftp.
 
 # Ciclo actual (siempre 00Z del día UTC)
-CYCLE_DATE_UTC="$(date -u +'%Y%m%d')"
+CYCLE_DATE_UTC="${CYCLE_DATE_UTC:-$(date -u +'%Y%m%d')}"
 CYCLE="${CYCLE_DATE_UTC}_00Z"
 
 # Staging por ciclo (transaccional)
