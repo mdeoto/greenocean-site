@@ -137,7 +137,6 @@ mkdir -p "$DEST"
 rsync -av --delete "$NORM/" "$DEST/"
 
 # ======= RETENCIÓN: mantener hoy y 2 días previos (3 ciclos 00Z) =======
-RETENTION_CYCLES=5
 RETENTION_CYCLES="${RETENTION_CYCLES:-5}"
 echo "[INFO] Retención de ciclos: manteniendo últimos ${RETENTION_CYCLES}"
 KEEP_DATES=()
