@@ -138,6 +138,7 @@ rsync -av --delete "$NORM/" "$DEST/"
 
 # ======= RETENCIÓN: mantener hoy y 2 días previos (3 ciclos 00Z) =======
 RETENTION_CYCLES=5
+RETENTION_CYCLES="${RETENTION_CYCLES:-5}"
 echo "[INFO] Retención de ciclos: manteniendo últimos ${RETENTION_CYCLES}"
 KEEP_DATES=()
 for i in $(seq 0 $((RETENTION_CYCLES-1))); do
